@@ -6,31 +6,69 @@
 //
 
 import XCTest
+import SwiftData
 @testable import RSPrinter
 
-final class RSPrinterTests: XCTestCase {
+@MainActor final class RSPrinterTests: XCTestCase {
 
+    var container: ModelContainer?
+    var viewModel:SavedPrintersListViewModel?
+    
+    enum TestErros: String, Error {
+        case invalidUrl = "Invalide Url"
+    }
+    
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
+        
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        container = try ModelContainer(for: Printer.self, configurations: config)
+        viewModel = SavedPrintersListViewModel(modelContext: container!.mainContext)
     }
 
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
+        container = nil
+        viewModel = nil
     }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    
+    func testEmptyList() throws {
+        
+        viewModel!.featchSavedPrinters()
+        XCTAssertEqual(viewModel!.printers.count, 0)
     }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    
+    func saveTestData() {
+        
+        guard let url = URL(string: "ipps://Raja-MacBook-Pro.local.:8632/ipp/print/save") else {
+            return
         }
+        let printer = UIPrinter(url: url)
+        viewModel?.saveNew(printer: printer)
     }
+    
+    func testAddPrinter() throws {
+        
+        saveTestData()
+        viewModel?.featchSavedPrinters()
+        XCTAssertEqual(viewModel!.printers.count, 1)
+        
+    }
+    
+    func testDeletePrinter() throws {
+        
+        saveTestData()
+        viewModel?.featchSavedPrinters()
+        XCTAssertEqual(viewModel!.printers.count, 1)
 
+        if let printer = viewModel?.printers.first {
+            
+            viewModel?.delete(printer: printer)
+            viewModel?.featchSavedPrinters()
+            XCTAssertEqual(viewModel!.printers.count, 0)
+        }
+        
+    }
+    
 }
+

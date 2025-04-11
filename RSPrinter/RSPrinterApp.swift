@@ -12,7 +12,7 @@ import SwiftData
 struct RSPrinterApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Printer.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +25,7 @@ struct RSPrinterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SavedPrintersListView(viewModel: SavedPrintersListViewModel(modelContext: sharedModelContainer.mainContext))
         }
         .modelContainer(sharedModelContainer)
     }
